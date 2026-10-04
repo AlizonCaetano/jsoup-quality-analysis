@@ -5,12 +5,16 @@ set -euo pipefail
 sudo apt update
 sudo apt install -y openjdk-17-jdk maven git python3-venv curl
 
+# Garante que o Maven use o JDK 17 instalado acima
+export JAVA_HOME="$(ls -d /usr/lib/jvm/java-17-openjdk-* | head -1)"
+
 mkdir -p tools
 
 # CK: compila a partir do código-fonte e guarda o jar em tools/ck.jar
 if [ ! -f tools/ck.jar ]; then
+  rm -rf tools/ck-src  # limpa clone incompleto de execuções anteriores
   git clone --depth 1 https://github.com/mauricioaniche/ck.git tools/ck-src
-  (cd tools/ck-src && mvn -q -DskipTests package)
+  (cd tools/ck-src && mvn -q -DskipTests -Dmaven.javadoc.skip=true package)
   cp tools/ck-src/target/ck-*-jar-with-dependencies.jar tools/ck.jar
 fi
 
