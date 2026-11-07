@@ -110,6 +110,8 @@ def codeql_analysis(summary, releases):
 
     rows = []
     for f in (RESULTS / "codeql").glob("*.sarif"):
+        if f.stem not in releases:  # ignora releases fora da janela atual
+            continue
         run = json.loads(f.read_text())["runs"][0]
         rows += [{"release": f.stem, "rule": r["ruleId"]} for r in run.get("results", [])]
     rules = (pd.DataFrame(rows)

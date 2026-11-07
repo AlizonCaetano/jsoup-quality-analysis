@@ -18,13 +18,11 @@ ROOT = Path(__file__).resolve().parent
 TOOLS, WORK, RESULTS = ROOT / "tools", ROOT / "work", ROOT / "results"
 REPO_URL = "https://github.com/jhy/jsoup.git"
 REPO_DIR = WORK / "jsoup"
-N_RELEASES = 30
+N_RELEASES = 20
 
 CK_JAR = TOOLS / "ck.jar"
 CODEQL = TOOLS / "codeql" / "codeql"
 SUITE = "codeql/java-queries:codeql-suites/java-security-and-quality.qls"
-CODEQL_THREADS = 2     # cada thread consome RAM; mais threads = mais rápido, porém mais memória
-CODEQL_RAM_MB = 4096   # limite de memória do CodeQL (WSL com ~8 GB)
 METRICS = ["wmc", "dit", "noc", "cbo", "lcom", "rfc", "loc"]
 
 
@@ -57,8 +55,7 @@ def run_codeql(src, tag):
         # build-mode=none: analisa o código sem compilar (evita problemas com releases antigas)
         run([CODEQL, "database", "create", db, "--language=java",
              "--build-mode=none", f"--source-root={src}", "--overwrite"])
-        run([CODEQL, "database", "analyze", db, SUITE,
-             f"--threads={CODEQL_THREADS}", f"--ram={CODEQL_RAM_MB}",
+        run([CODEQL, "database", "analyze", db, SUITE, "--threads=0",
              "--format=sarif-latest", f"--output={sarif}"])
     return count_alerts(sarif)
 
@@ -88,7 +85,7 @@ def main():
 
     try:
         for i, tag in enumerate(list_releases(git), 1):
-            print(f"[{i}/{N_RELEASES}] {tag.name}", flush=True)
+            print(f"[{i}/{N_RELEASES}] {tag.name}")
             git.checkout(tag.commit.hexsha)
             src = REPO_DIR / "src" / "main" / "java"
             if not src.exists():
